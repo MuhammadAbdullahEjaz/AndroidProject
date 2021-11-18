@@ -12,19 +12,21 @@ import androidx.lifecycle.ViewModelProvider
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var viewModel:ItemViewModel
+
+    private val viewModel:ItemViewModel by viewModels{ItemViewModelFactory(
+        (this?.application as ItemApplication).repository)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        viewModel = ViewModelProvider(this).get(ItemViewModel::class.java)
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
+
         viewModel.getItemsList()
         viewModel.data.observe(this, {newItemList ->
             binding.recyclerView.adapter = ItemAdapter(newItemList)
             Log.d("main", "In  observer")
         })
-
     }
 }

@@ -1,27 +1,33 @@
 package com.example.project
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import com.example.project.database.AppDatabase
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.example.project.network.PropertyDC
 import java.lang.Exception
 
-class ItemViewModel(application: Application): AndroidViewModel(application) {
+class ItemViewModel(private val itemRepository: ItemRepository): ViewModel() {
     var data:MutableLiveData<List<PropertyDC>> = MutableLiveData<List<PropertyDC>>()
-    private var itemRespository: ItemRepository
-    init {
-        val propertyDao = AppDatabase.getDatabase(application).propertyDao()
-        itemRespository = ItemRepository(propertyDao)
-    }
+
     fun getItemsList(){
         try {
-                itemRespository.fetchRealestateData()
-                data = itemRespository.getRealEstateLiveData()
+                itemRepository.fetchRealestateData()
+                data = itemRepository.getRealEstateLiveData()
 
         }catch (e: Exception){
                 Log.d("fetch","In exception ${e.message}")
         }
+    }
+
+}
+
+class ItemViewModelFactory(private val itemRepository: ItemRepository) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ItemViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ItemViewModel(itemRepository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

@@ -7,14 +7,20 @@ import com.example.project.database.property.Property
 import com.example.project.database.property.PropertyDao
 import com.example.project.network.ItemApi
 import com.example.project.network.PropertyDC
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.Dispatcher
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class ItemRepository(private val propertyDao:PropertyDao){
+class ItemRepository(private val propertyDao: PropertyDao) {
     private var ItemApiService: ItemApi? = null
     private var realestateData: MutableLiveData<List<PropertyDC>> = MutableLiveData()
+
     init {
         ItemApiService = Retrofit.Builder()
             .baseUrl("https://android-kotlin-fun-mars-server.appspot.com")
@@ -23,31 +29,82 @@ class ItemRepository(private val propertyDao:PropertyDao){
             .create(ItemApi::class.java)
     }
 
-    fun fetchRealestateData(){
-        ItemApiService?.getRealEstate()?.enqueue(object :retrofit2.Callback<List<PropertyDC>>{
+    fun fetchRealestateData() {
+        ItemApiService?.getRealEstate()?.enqueue(object : retrofit2.Callback<List<PropertyDC>> {
             override fun onResponse(
                 call: Call<List<PropertyDC>>,
                 response: Response<List<PropertyDC>>
             ) {
-                if(response.code() == 200){
+                if (response.code() == 200) {
                     realestateData.postValue(response.body())
+                    CoroutineScope(Dispatchers.IO).launch {
+                        response.body()?.forEach{p->
+                            val id:Int? = isIdPresent(p.id.toInt())
+                            if(id != null){
+                                updatePropertyR(p)
+                            }else{
+                                insertPropertyR(p)
+                            }
+                        }
+                    }
                 }
             }
 
+
             override fun onFailure(call: Call<List<PropertyDC>>, t: Throwable) {
-                Log.d("fetch", "error in getRealestateData()")
+                val data: MutableList<PropertyDC> = mutableListOf()
+                getallProperty().observeForever { list ->
+                    Log.d("fetch", "data from db ${list}")
+                    list.forEach { p ->
+                        data.add(
+                            PropertyDC(
+                                id = p.id.toString(),
+                                price = p.price,
+                                type = p.type,
+                                img_src = p.img_src
+                            )
+                        )
+                    }
+                    realestateData.postValue(data.toList())
+                }
             }
 
         })
     }
-    fun getRealEstateLiveData():MutableLiveData<List<PropertyDC>>{
+
+    fun getRealEstateLiveData(): MutableLiveData<List<PropertyDC>> {
         return realestateData
     }
 
-    suspend fun insertPropertyR(property: Property){
-        propertyDao.insertProperty(property)
+    suspend fun insertPropertyR(p: PropertyDC){
+        propertyDao.insertProperty(Property(p.id.toInt(), p.price, p.type, p.img_src))
     }
-    suspend fun getallProperty():LiveData<List<Property>>{
+
+    suspend fun insertPropertyAllR(property: List<PropertyDC>?) {
+        if (property != null) {
+            property.forEach { p ->
+                propertyDao.insertProperty(Property(p.id.toInt(), p.price, p.type, p.img_src))
+            }
+        }
+    }
+
+    suspend fun updatePropertyAllR(property: List<PropertyDC>?) {
+        if (property != null) {
+            property.forEach { p ->
+                propertyDao.updateProperty(Property(p.id.toInt(), p.price, p.type, p.img_src))
+            }
+        }
+    }
+
+    suspend fun updatePropertyR(p: PropertyDC){
+        propertyDao.updateProperty(Property(p.id.toInt(), p.price, p.type, p.img_src))
+    }
+
+    suspend fun isIdPresent(id:Int):Int{
+        return propertyDao.isIdPresent(id)
+    }
+
+    fun getallProperty(): LiveData<List<Property>> {
         return propertyDao.fetchallProperty()
     }
 }
