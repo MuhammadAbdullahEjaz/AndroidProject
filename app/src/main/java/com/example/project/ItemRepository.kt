@@ -1,5 +1,6 @@
 package com.example.project
 
+import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -17,7 +18,10 @@ import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-class ItemRepository(private val propertyDao: PropertyDao) {
+class ItemRepository(
+    private val propertyDao: PropertyDao,
+    private val sharedPreferences: SharedPreferences
+) {
     private var ItemApiService: ItemApi? = null
     private var realestateData: MutableLiveData<List<PropertyDC>> = MutableLiveData()
 
@@ -30,19 +34,45 @@ class ItemRepository(private val propertyDao: PropertyDao) {
     }
 
     fun fetchRealestateData() {
+        val data: MutableList<PropertyDC> = mutableListOf()
+        if (sharedPreferences.contains(MainActivity.Main.FIRST)) {
+            var notFirst: Boolean = false
+            sharedPreferences.getBoolean(MainActivity.Main.FIRST, notFirst)
+            Log.d("notFirst", "v: $notFirst")
+            if (notFirst) {
+                getallProperty().observeForever { list ->
+                    list.forEach { p ->
+                        data.add(
+                            PropertyDC(
+                                id = p.id.toString(),
+                                price = p.price,
+                                type = p.type,
+                                img_src = p.img_src
+                            )
+                        )
+                    }
+                }
+            }
+            realestateData.postValue(data)
+        }
         ItemApiService?.getRealEstate()?.enqueue(object : retrofit2.Callback<List<PropertyDC>> {
             override fun onResponse(
                 call: Call<List<PropertyDC>>,
                 response: Response<List<PropertyDC>>
             ) {
                 if (response.code() == 200) {
+
+                    Log.d(
+                        "sharedpref",
+                        "isIn ${sharedPreferences.contains(MainActivity.Main.FIRST)}"
+                    )
                     realestateData.postValue(response.body())
                     CoroutineScope(Dispatchers.IO).launch {
-                        response.body()?.forEach{p->
-                            val id:Int? = isIdPresent(p.id.toInt())
-                            if(id != null){
+                        response.body()?.forEach { p ->
+                            val id: Int? = isIdPresent(p.id.toInt())
+                            if (id != null) {
                                 updatePropertyR(p)
-                            }else{
+                            } else {
                                 insertPropertyR(p)
                             }
                         }
@@ -76,7 +106,7 @@ class ItemRepository(private val propertyDao: PropertyDao) {
         return realestateData
     }
 
-    suspend fun insertPropertyR(p: PropertyDC){
+    suspend fun insertPropertyR(p: PropertyDC) {
         propertyDao.insertProperty(Property(p.id.toInt(), p.price, p.type, p.img_src))
     }
 
@@ -96,11 +126,11 @@ class ItemRepository(private val propertyDao: PropertyDao) {
         }
     }
 
-    suspend fun updatePropertyR(p: PropertyDC){
+    suspend fun updatePropertyR(p: PropertyDC) {
         propertyDao.updateProperty(Property(p.id.toInt(), p.price, p.type, p.img_src))
     }
 
-    suspend fun isIdPresent(id:Int):Int{
+    suspend fun isIdPresent(id: Int): Int {
         return propertyDao.isIdPresent(id)
     }
 

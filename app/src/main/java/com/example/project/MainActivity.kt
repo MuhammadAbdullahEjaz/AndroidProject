@@ -1,20 +1,24 @@
 package com.example.project
 
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.project.databinding.ActivityMainBinding
 import androidx.activity.viewModels
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityMainBinding
+    object Main{
+        val SharedPreferenceFile:String = "Pref"
+        val FIRST = "notfirst"
+    }
 
+    private lateinit var binding: ActivityMainBinding
     private val viewModel:ItemViewModel by viewModels{ItemViewModelFactory(
-        (this?.application as ItemApplication).repository)
+        (this.application as ItemApplication).repository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,5 +32,13 @@ class MainActivity : AppCompatActivity() {
             binding.recyclerView.adapter = ItemAdapter(newItemList)
             Log.d("main", "In  observer")
         })
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val sharedPreference = this.getSharedPreferences(Main.SharedPreferenceFile,Context.MODE_PRIVATE)
+        val sharedPreferenceEditor:SharedPreferences.Editor = sharedPreference.edit()
+        sharedPreferenceEditor.putBoolean(Main.FIRST, true)
+        sharedPreferenceEditor.apply()
     }
 }

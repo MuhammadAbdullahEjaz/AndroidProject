@@ -14,12 +14,10 @@ class ItemViewModel(private val itemRepository: ItemRepository): ViewModel() {
         try {
                 itemRepository.fetchRealestateData()
                 data = itemRepository.getRealEstateLiveData()
-
         }catch (e: Exception){
                 Log.d("fetch","In exception ${e.message}")
         }
     }
-
 }
 
 class ItemViewModelFactory(private val itemRepository: ItemRepository) : ViewModelProvider.Factory {
