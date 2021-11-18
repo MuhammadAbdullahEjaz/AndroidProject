@@ -36,9 +36,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        val sharedPreference = this.getSharedPreferences(Main.SharedPreferenceFile,Context.MODE_PRIVATE)
+        val sharedPreference = this.getSharedPreferences(Main.SharedPreferenceFile,MODE_PRIVATE)
         val sharedPreferenceEditor:SharedPreferences.Editor = sharedPreference.edit()
         sharedPreferenceEditor.putBoolean(Main.FIRST, true)
-        sharedPreferenceEditor.apply()
+        sharedPreferenceEditor.commit()
     }
 }

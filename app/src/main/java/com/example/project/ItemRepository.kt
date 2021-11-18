@@ -34,15 +34,13 @@ class ItemRepository(
     }
 
     fun fetchRealestateData() {
-        val data: MutableList<PropertyDC> = mutableListOf()
         if (sharedPreferences.contains(MainActivity.Main.FIRST)) {
-            var notFirst: Boolean = false
-            sharedPreferences.getBoolean(MainActivity.Main.FIRST, notFirst)
-            Log.d("notFirst", "v: $notFirst")
+            val data1: MutableList<PropertyDC> = mutableListOf()
+            var notFirst: Boolean = sharedPreferences.getBoolean(MainActivity.Main.FIRST, false)
             if (notFirst) {
                 getallProperty().observeForever { list ->
                     list.forEach { p ->
-                        data.add(
+                        data1.add(
                             PropertyDC(
                                 id = p.id.toString(),
                                 price = p.price,
@@ -51,55 +49,51 @@ class ItemRepository(
                             )
                         )
                     }
+                    Log.d("resp","data fetched from DB")
+                    realestateData.postValue(data1)
                 }
             }
-            realestateData.postValue(data)
-        }
-        ItemApiService?.getRealEstate()?.enqueue(object : retrofit2.Callback<List<PropertyDC>> {
-            override fun onResponse(
-                call: Call<List<PropertyDC>>,
-                response: Response<List<PropertyDC>>
-            ) {
-                if (response.code() == 200) {
-
-                    Log.d(
-                        "sharedpref",
-                        "isIn ${sharedPreferences.contains(MainActivity.Main.FIRST)}"
-                    )
-                    realestateData.postValue(response.body())
-                    CoroutineScope(Dispatchers.IO).launch {
-                        response.body()?.forEach { p ->
-                            val id: Int? = isIdPresent(p.id.toInt())
-                            if (id != null) {
-                                updatePropertyR(p)
-                            } else {
-                                insertPropertyR(p)
+        } else {
+            ItemApiService?.getRealEstate()?.enqueue(object : retrofit2.Callback<List<PropertyDC>> {
+                override fun onResponse(
+                    call: Call<List<PropertyDC>>,
+                    response: Response<List<PropertyDC>>
+                ) {
+                    if (response.code() == 200) {
+                        Log.d("resp","data fetched from API")
+                        realestateData.postValue(response.body())
+                        CoroutineScope(Dispatchers.IO).launch {
+                            response.body()?.forEach { p ->
+                                val id: Int? = isIdPresent(p.id.toInt())
+                                if (id != null) {
+                                    updatePropertyR(p)
+                                } else {
+                                    insertPropertyR(p)
+                                }
                             }
                         }
                     }
                 }
-            }
 
 
-            override fun onFailure(call: Call<List<PropertyDC>>, t: Throwable) {
-                val data: MutableList<PropertyDC> = mutableListOf()
-                getallProperty().observeForever { list ->
-                    Log.d("fetch", "data from db ${list}")
-                    list.forEach { p ->
-                        data.add(
-                            PropertyDC(
-                                id = p.id.toString(),
-                                price = p.price,
-                                type = p.type,
-                                img_src = p.img_src
+                override fun onFailure(call: Call<List<PropertyDC>>, t: Throwable) {
+                    val data: MutableList<PropertyDC> = mutableListOf()
+                    getallProperty().observeForever { list ->
+                        list.forEach { p ->
+                            data.add(
+                                PropertyDC(
+                                    id = p.id.toString(),
+                                    price = p.price,
+                                    type = p.type,
+                                    img_src = p.img_src
+                                )
                             )
-                        )
+                        }
+                        realestateData.postValue(data.toList())
                     }
-                    realestateData.postValue(data.toList())
                 }
-            }
-
-        })
+            })
+        }
     }
 
     fun getRealEstateLiveData(): MutableLiveData<List<PropertyDC>> {
