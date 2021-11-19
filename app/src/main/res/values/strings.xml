@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Project</string>
+    <string name="email_hint">Email</string>
+    <string name="password_hint">Password</string>
+    <string name="signin_button">SIGNIN</string>
+    <string name="signin_with_google_button">SIGNIN WITH GOOGLE</string>
+    <string name="signin_with_facebook_button">SIGNIN WITH FACEBOOK</string>
 </resources>

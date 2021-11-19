@@ -42,14 +42,7 @@ class ItemRepository(
                     if (response.code() == 200) {
                         Log.d("resp", "data fetched from API")
                         CoroutineScope(Dispatchers.IO).launch {
-                            response.body()?.forEach { p ->
-                                val id: Int? = isIdPresentR(p.id.toInt())
-                                if (id != null) {
-                                    updatePropertyR(p)
-                                } else {
-                                    insertPropertyR(p)
-                                }
-                            }
+                            insertPropertyAllR(response.body())
                         }
                     }
                 }

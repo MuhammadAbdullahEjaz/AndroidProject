@@ -1,14 +1,11 @@
 package com.example.project.database.property
 
 import androidx.lifecycle.LiveData
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 
 @Dao
 interface PropertyDao {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProperty(property: Property)
 
     @Query("SELECT * FROM property")

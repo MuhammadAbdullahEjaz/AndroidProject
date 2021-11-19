@@ -3,7 +3,8 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
-        <entry key="..\:/Users/Quantum/AndroidStudioProjects/Project/app/src/main/res/layout/activity_main.xml" value="0.12771739130434784" />
+        <entry key="..\:/Users/Quantum/AndroidStudioProjects/Project/app/src/main/res/layout/activity_login.xml" value="0.1" />
+        <entry key="..\:/Users/Quantum/AndroidStudioProjects/Project/app/src/main/res/layout/activity_main.xml" value="0.1" />
         <entry key="..\:/Users/Quantum/AndroidStudioProjects/Project/app/src/main/res/xml/network_security_config.xml" value="0.1" />
       </map>
     </option>

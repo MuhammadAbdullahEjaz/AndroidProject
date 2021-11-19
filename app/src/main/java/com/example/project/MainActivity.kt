@@ -9,11 +9,6 @@ import com.example.project.utils.SharedPref
 
 class MainActivity : AppCompatActivity() {
 
-    object Main{
-        val SharedPreferenceFile:String = "Pref"
-        val FIRST = "notfirst"
-    }
-
     private lateinit var binding: ActivityMainBinding
     private val viewModel:ItemViewModel by viewModels{ItemViewModelFactory(
         (this.application as ItemApplication).repository)
