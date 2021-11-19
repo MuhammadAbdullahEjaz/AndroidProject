@@ -2,9 +2,14 @@ package com.example.project
 
 import android.app.Application
 import com.example.project.database.AppDatabase
+import com.example.project.utils.SharedPref
 
 class ItemApplication:Application() {
     val database by lazy {AppDatabase.getDatabase(this)}
-    val sharedPreference by lazy { this.getSharedPreferences(MainActivity.Main.SharedPreferenceFile, MODE_PRIVATE) }
-    val repository by lazy { ItemRepository(database.propertyDao(),sharedPreference) }
+    val repository by lazy { ItemRepository(database.propertyDao()) }
+
+    override fun onCreate() {
+        super.onCreate()
+        SharedPref.setupSharedPref(this)
+    }
 }

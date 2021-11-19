@@ -8,6 +8,7 @@ import com.example.project.database.property.Property
 import com.example.project.database.property.PropertyDao
 import com.example.project.network.ItemApi
 import com.example.project.network.PropertyDC
+import com.example.project.utils.SharedPref
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,11 +21,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class ItemRepository(
     private val propertyDao: PropertyDao,
-    private val sharedPreferences: SharedPreferences
 ) {
     private var ItemApiService: ItemApi? = null
-    private var realestateData: MutableLiveData<List<PropertyDC>> = MutableLiveData()
-
+    private var realestateData: MutableLiveData<List<Property>>  = MutableLiveData()
     init {
         ItemApiService = Retrofit.Builder()
             .baseUrl("https://android-kotlin-fun-mars-server.appspot.com")
@@ -33,38 +32,18 @@ class ItemRepository(
             .create(ItemApi::class.java)
     }
 
-    fun fetchRealestateData() {
-        if (sharedPreferences.contains(MainActivity.Main.FIRST)) {
-            val data1: MutableList<PropertyDC> = mutableListOf()
-            var notFirst: Boolean = sharedPreferences.getBoolean(MainActivity.Main.FIRST, false)
-            if (notFirst) {
-                getallProperty().observeForever { list ->
-                    list.forEach { p ->
-                        data1.add(
-                            PropertyDC(
-                                id = p.id.toString(),
-                                price = p.price,
-                                type = p.type,
-                                img_src = p.img_src
-                            )
-                        )
-                    }
-                    Log.d("resp","data fetched from DB")
-                    realestateData.postValue(data1)
-                }
-            }
-        } else {
+    fun fetchRealestateData():LiveData<List<Property>> {
+        if (!SharedPref.getPrefNotFirst()) {
             ItemApiService?.getRealEstate()?.enqueue(object : retrofit2.Callback<List<PropertyDC>> {
                 override fun onResponse(
                     call: Call<List<PropertyDC>>,
                     response: Response<List<PropertyDC>>
                 ) {
                     if (response.code() == 200) {
-                        Log.d("resp","data fetched from API")
-                        realestateData.postValue(response.body())
+                        Log.d("resp", "data fetched from API")
                         CoroutineScope(Dispatchers.IO).launch {
                             response.body()?.forEach { p ->
-                                val id: Int? = isIdPresent(p.id.toInt())
+                                val id: Int? = isIdPresentR(p.id.toInt())
                                 if (id != null) {
                                     updatePropertyR(p)
                                 } else {
@@ -75,29 +54,15 @@ class ItemRepository(
                     }
                 }
 
-
                 override fun onFailure(call: Call<List<PropertyDC>>, t: Throwable) {
-                    val data: MutableList<PropertyDC> = mutableListOf()
-                    getallProperty().observeForever { list ->
-                        list.forEach { p ->
-                            data.add(
-                                PropertyDC(
-                                    id = p.id.toString(),
-                                    price = p.price,
-                                    type = p.type,
-                                    img_src = p.img_src
-                                )
-                            )
-                        }
-                        realestateData.postValue(data.toList())
-                    }
+                    Log.d("resp","on failure")
+                    SharedPref.setPrefNotFirst(false)
                 }
             })
+            return getallPropertyR()
+        } else {
+            return getallPropertyR()
         }
-    }
-
-    fun getRealEstateLiveData(): MutableLiveData<List<PropertyDC>> {
-        return realestateData
     }
 
     suspend fun insertPropertyR(p: PropertyDC) {
@@ -124,11 +89,12 @@ class ItemRepository(
         propertyDao.updateProperty(Property(p.id.toInt(), p.price, p.type, p.img_src))
     }
 
-    suspend fun isIdPresent(id: Int): Int {
+    suspend fun isIdPresentR(id: Int): Int {
         return propertyDao.isIdPresent(id)
     }
 
-    fun getallProperty(): LiveData<List<Property>> {
+    private fun getallPropertyR(): LiveData<List<Property>> {
+        Log.d("resp","from DB")
         return propertyDao.fetchallProperty()
     }
 }

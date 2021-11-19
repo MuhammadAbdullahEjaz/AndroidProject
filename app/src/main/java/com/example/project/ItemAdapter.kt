@@ -8,12 +8,12 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.project.database.property.Property
 import com.example.project.databinding.ItemBinding
-import com.example.project.network.PropertyDC
 import com.squareup.picasso.Picasso
 import java.lang.Exception
 
-class ItemAdapter(private val data: List<PropertyDC>):RecyclerView.Adapter<ItemAdapter.ViewHolder>() {
+class ItemAdapter(private val data: List<Property>):RecyclerView.Adapter<ItemAdapter.ViewHolder>() {
     private lateinit var binding: ItemBinding
     class ViewHolder(private  val view: View): RecyclerView.ViewHolder(view){
         val textView: TextView = view.findViewById(R.id.image_title)
